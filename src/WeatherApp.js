@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import './WeatherApp.css';
 
-const API_KEY = 'e5f76b4a15246e53e38f042637f8e7574';
-const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const API_KEY = '5f76b4a15246e53e38f042637f8e7574';
+const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const FORECAST_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 
 function WeatherApp() {
   const [city, setCity] = useState('Lagos');
   const [weatherData, setWeatherData] = useState(null);
+  const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchWeatherData(city);
-  },);
+  }, [city]);
 
   const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
 
@@ -20,12 +22,23 @@ function WeatherApp() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}`);
-      const data = await response.json();
-      if (data.cod !== 200) throw new Error(data.message);
-      setWeatherData(data);
+      // Fetch current weather
+      const weatherResponse = await fetch(`${WEATHER_API_URL}?q=${city}&appid=${API_KEY}`);
+      const weatherResult = await weatherResponse.json();
+      if (weatherResult.cod !== 200) throw new Error(weatherResult.message);
+      setWeatherData(weatherResult);
+
+      // Fetch forecast data
+      const forecastResponse = await fetch(`${FORECAST_API_URL}?q=${city}&appid=${API_KEY}`);
+      const forecastResult = await forecastResponse.json();
+      if (forecastResult.cod !== "200") throw new Error(forecastResult.message);
+      
+      // Get next 4 forecasts (3-hour intervals)
+      const nextFourForecasts = forecastResult.list.slice(0, 4);
+      setForecastData(nextFourForecasts);
+
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setError('City not found or network error. Please try again.');
     } finally {
       setLoading(false);
@@ -35,6 +48,14 @@ function WeatherApp() {
   const handleSearch = () => {
     if (city.trim()) fetchWeatherData(city);
     else setError('Please enter a city name');
+  };
+
+  const formatTime = (timestamp) => {
+    return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   return (
@@ -56,10 +77,13 @@ function WeatherApp() {
         <div className="weather-info">
           <div className="city">{`${weatherData.name}, ${weatherData.sys.country}`}</div>
           <div className="date">
-            {new Date(weatherData.dt * 1000).toLocaleDateString('en-US', {
+            {new Date(weatherData.dt * 1000).toLocaleString('en-US', {
               weekday: 'long',
               month: 'short',
               day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              second: '2-digit',
             })}
           </div>
           <div className="weather-icon">
@@ -89,6 +113,28 @@ function WeatherApp() {
               <div className="detail-value">{`${kelvinToCelsius(weatherData.main.feels_like)}°C`}</div>
             </div>
           </div>
+
+          {/* 4-Hour Forecast Section */}
+          {forecastData && (
+            <div className="forecast-section">
+              <h3 className="forecast-title">4-Hour Forecast</h3>
+              <div className="forecast-container">
+                {forecastData.map((forecast, index) => (
+                  <div key={index} className="forecast-item">
+                    <div className="forecast-time">{formatTime(forecast.dt)}</div>
+                    <img
+                      src={`http://openweathermap.org/img/wn/${forecast.weather[0].icon}.png`}
+                      alt="Weather Icon"
+                      className="forecast-icon"
+                    />
+                    <div className="forecast-temp">
+                      {`${kelvinToCelsius(forecast.main.temp)}°C`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

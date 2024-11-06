@@ -1,6 +1,6 @@
 {
   "name": "weather-app",
-  "homepage": "https://git@github.com:EDENI-JOEL/weather.git/weather/",
+  "homepage": "https://EDENI-JOEL.github.io/weather/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
