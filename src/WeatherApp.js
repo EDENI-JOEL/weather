@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import './WeatherApp.css';
 
 const API_KEY = '5f76b4a15246e53e38f042637f8e7574';
@@ -14,13 +14,7 @@ function WeatherApp() {
   const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
 
-  useEffect(() => {
-    fetchWeatherData(city);
-  }, []);
-
-  const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
-
-  const fetchWeatherData = async (cityName) => {
+  const fetchWeatherData = useCallback(async (cityName) => {
     if (!cityName.trim()) {
       setError('Please enter a city name');
       return;
@@ -28,47 +22,42 @@ function WeatherApp() {
 
     setLoading(true);
     setError(null);
+
     try {
       // Fetch current weather
       const weatherResponse = await fetch(`${WEATHER_API_URL}?q=${cityName}&appid=${API_KEY}`);
       const weatherResult = await weatherResponse.json();
-      if (weatherResult.cod !== 200) throw new Error(weatherResult.message);
+      if (weatherResult.cod !== 200) throw new Error('City not found');
       setWeatherData(weatherResult);
 
       // Fetch forecast data
       const forecastResponse = await fetch(`${FORECAST_API_URL}?q=${cityName}&appid=${API_KEY}`);
       const forecastResult = await forecastResponse.json();
-      if (forecastResult.cod !== "200") throw new Error(forecastResult.message);
-      
-      // Get next 4 forecasts (3-hour intervals)
-      const nextFourForecasts = forecastResult.list.slice(0, 4);
+      if (forecastResult.cod !== "200") throw new Error('City not found');
+
+      const nextFourForecasts = forecastResult.list ? forecastResult.list.slice(0, 4) : [];
       setForecastData(nextFourForecasts);
 
     } catch (err) {
       console.log(err);
-      setError('City not found or network error. Please try again.');
+      setError(err.message === 'City not found' ? 'City not found. Please try again.' : 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setCity(value);
     setIsTyping(true);
-    
-    // Clear any existing timeout
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
 
-    // Set new timeout
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+   
     const timeout = setTimeout(() => {
       setIsTyping(false);
-      if (value.trim()) {
-        fetchWeatherData(value);
-      }
-    }, 1000); // Wait for 1 second after user stops typing
+      if (value.trim()) fetchWeatherData(value);
+    }, 1000); 
 
     setTypingTimeout(timeout);
   };
@@ -79,6 +68,8 @@ function WeatherApp() {
       fetchWeatherData(city);
     }
   };
+
+  const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
 
   const formatTime = (timestamp) => {
     return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
@@ -144,7 +135,7 @@ function WeatherApp() {
             </div>
           </div>
 
-          {forecastData && (
+          {forecastData && forecastData.length > 0 && (
             <div className="forecast-section">
               <h3 className="forecast-title">4-Hour Forecast</h3>
               <div className="forecast-container">
