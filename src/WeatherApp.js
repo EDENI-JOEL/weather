@@ -11,25 +11,32 @@ function WeatherApp() {
   const [forecastData, setForecastData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
 
   useEffect(() => {
     fetchWeatherData(city);
-  }, [city]);
+  }, []);
 
   const kelvinToCelsius = (kelvin) => Math.round(kelvin - 273.15);
 
-  const fetchWeatherData = async (city) => {
+  const fetchWeatherData = async (cityName) => {
+    if (!cityName.trim()) {
+      setError('Please enter a city name');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       // Fetch current weather
-      const weatherResponse = await fetch(`${WEATHER_API_URL}?q=${city}&appid=${API_KEY}`);
+      const weatherResponse = await fetch(`${WEATHER_API_URL}?q=${cityName}&appid=${API_KEY}`);
       const weatherResult = await weatherResponse.json();
       if (weatherResult.cod !== 200) throw new Error(weatherResult.message);
       setWeatherData(weatherResult);
 
       // Fetch forecast data
-      const forecastResponse = await fetch(`${FORECAST_API_URL}?q=${city}&appid=${API_KEY}`);
+      const forecastResponse = await fetch(`${FORECAST_API_URL}?q=${cityName}&appid=${API_KEY}`);
       const forecastResult = await forecastResponse.json();
       if (forecastResult.cod !== "200") throw new Error(forecastResult.message);
       
@@ -45,9 +52,32 @@ function WeatherApp() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setCity(value);
+    setIsTyping(true);
+    
+    // Clear any existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      setIsTyping(false);
+      if (value.trim()) {
+        fetchWeatherData(value);
+      }
+    }, 1000); // Wait for 1 second after user stops typing
+
+    setTypingTimeout(timeout);
+  };
+
   const handleSearch = () => {
-    if (city.trim()) fetchWeatherData(city);
-    else setError('Please enter a city name');
+    if (city.trim()) {
+      setIsTyping(false);
+      fetchWeatherData(city);
+    }
   };
 
   const formatTime = (timestamp) => {
@@ -65,14 +95,14 @@ function WeatherApp() {
           type="text"
           placeholder="Search for a city..."
           value={city}
-          onChange={(e) => setCity(e.target.value)}
+          onChange={handleInputChange}
         />
         {loading && <div className="loading-spinner" />}
-        <button onClick={handleSearch} disabled={loading}>
+        <button onClick={handleSearch} disabled={loading || isTyping}>
           Search
         </button>
       </div>
-      {error && <div className="error-message">{error}</div>}
+      {error && !isTyping && <div className="error-message">{error}</div>}
       {weatherData && (
         <div className="weather-info">
           <div className="city">{`${weatherData.name}, ${weatherData.sys.country}`}</div>
@@ -88,7 +118,7 @@ function WeatherApp() {
           </div>
           <div className="weather-icon">
             <img
-              src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`}
+              src={`https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`}
               alt="Weather Icon"
             />
           </div>
@@ -114,7 +144,6 @@ function WeatherApp() {
             </div>
           </div>
 
-          {/* 4-Hour Forecast Section */}
           {forecastData && (
             <div className="forecast-section">
               <h3 className="forecast-title">4-Hour Forecast</h3>
@@ -123,7 +152,7 @@ function WeatherApp() {
                   <div key={index} className="forecast-item">
                     <div className="forecast-time">{formatTime(forecast.dt)}</div>
                     <img
-                      src={`http://openweathermap.org/img/wn/${forecast.weather[0].icon}.png`}
+                      src={`https://openweathermap.org/img/wn/${forecast.weather[0].icon}.png`}
                       alt="Weather Icon"
                       className="forecast-icon"
                     />
