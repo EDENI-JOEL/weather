@@ -14,6 +14,7 @@ body {
   padding: clamp(1rem, 2vw, 2rem);
   background-size: cover;
   background-repeat: no-repeat;
+  background-position: center;
 }
 
 .weather-card {
@@ -22,30 +23,41 @@ body {
   padding: clamp(1.5rem, 3vw, 3rem);
   width: min(90%, 500px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .search-box {
+  position: relative;
   display: flex;
-  gap: clamp(0.5rem, 1vw, 1rem);
   width: 100%;
-  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
 
 .search-box input {
-  flex: 1 1 200px;
+  flex: 1;
   min-width: 0;
   padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  padding-right: clamp(6rem, 8vw, 8rem);
   border: none;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 30px;
   font-size: clamp(14px, 1.5vw, 16px);
   outline: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  box-shadow: 0 4px 16px rgba(0, 131, 176, 0.2);
 }
 
 .search-box button {
-  flex: 0 0 auto;
-  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2vw, 1.5rem);
+  position: absolute;
+  right: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: clamp(0.5rem, 1vw, 0.75rem) clamp(1rem, 1.5vw, 1.25rem);
   border: none;
   background: #0083b0;
   color: white;
@@ -55,15 +67,37 @@ body {
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
+  min-width: fit-content;
+  height: calc(100% - 0.6rem);
 }
 
 .search-box button:hover {
   background: #006b8f;
+  transform: translateY(-50%) scale(1.02);
 }
 
 .search-box button:disabled {
   background: #ccc;
   cursor: not-allowed;
+  transform: translateY(-50%);
+}
+
+.loading-spinner {
+  position: absolute;
+  right: clamp(5rem, 7vw, 7rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(16px, 2vw, 20px);
+  height: clamp(16px, 2vw, 20px);
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #0083b0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
 }
 
 .weather-info {
@@ -86,19 +120,6 @@ body {
   font-size: clamp(12px, 1.2vw, 14px);
 }
 
-.loading-spinner {
-  position: absolute;
-  right: clamp(1rem, 6vw, 3rem);
-  top: 50%;
-  transform: translateY(-50%);
-  width: clamp(16px, 2vw, 20px);
-  height: clamp(16px, 2vw, 20px);
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #0083b0;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 .city {
   font-size: clamp(1.25rem, 2.5vw, 1.5rem);
   color: #333;
@@ -107,7 +128,7 @@ body {
 }
 
 .date {
-  color: #000;
+  color: #666;
   margin-bottom: clamp(1rem, 2vw, 2rem);
   font-size: clamp(0.8rem, 1.2vw, 0.9rem);
 }
@@ -128,11 +149,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0.5rem;
 }
 
 .weather-icon img {
-  width: 80%;
-  height: 80%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -140,6 +162,7 @@ body {
   color: #444;
   font-size: clamp(0.9rem, 1.2vw, 1rem);
   margin: clamp(0.5rem, 1vw, 1rem) 0 clamp(1rem, 2vw, 2rem) 0;
+  text-transform: capitalize;
 }
 
 .weather-details {
@@ -156,6 +179,12 @@ body {
   background: rgba(0, 131, 176, 0.05);
   padding: clamp(0.75rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1rem);
   border-radius: 15px;
+  transition: transform 0.3s ease;
+}
+
+.detail:hover {
+  transform: translateY(-2px);
+  background: rgba(0, 131, 176, 0.1);
 }
 
 .detail-label {
@@ -202,6 +231,11 @@ body {
   transition: transform 0.2s ease;
 }
 
+.forecast-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
 .forecast-time {
   font-size: clamp(0.8rem, 1.1vw, 0.9rem);
   color: #444;
@@ -223,22 +257,28 @@ body {
 }
 
 @media (max-width: 480px) {
-  .search-box {
-    flex-direction: column;
+  .weather-card {
+    padding: clamp(1rem, 2vw, 1.5rem);
   }
 
-  .search-box input,
+  .search-box input {
+    font-size: 14px;
+    padding: 0.75rem 5rem 0.75rem 1rem;
+  }
+  
   .search-box button {
-    width: 100%;
-    flex: 1 1 auto;
+    font-size: 14px;
+    padding: 0.5rem 1rem;
   }
 
   .weather-details {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
   }
 
   .forecast-container {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
   }
 }
 
