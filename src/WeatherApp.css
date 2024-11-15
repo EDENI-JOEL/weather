@@ -23,7 +23,6 @@ body {
   padding: clamp(1.5rem, 3vw, 3rem);
   width: min(90%, 500px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
 }
 
 .search-box {
@@ -161,8 +160,8 @@ body {
 }
 
 .weather-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(clamp(70px, 15vw, 100px), 1fr));
+  display: flex;
+  justify-content: space-between;
   gap: clamp(1rem, 2vw, 2rem);
   margin-top: clamp(1rem, 2vw, 2rem);
   padding-top: clamp(1rem, 2vw, 2rem);
@@ -170,6 +169,7 @@ body {
 }
 
 .detail {
+  flex: 1;
   text-align: center;
   background: rgba(0, 131, 176, 0.05);
   padding: clamp(0.75rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1rem);
